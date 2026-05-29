@@ -13,7 +13,6 @@ All results are saved to your local PostgreSQL database.
 | Node.js    | v24.16.0         |
 | npm        | 11.13.0          |
 | PostgreSQL | 16.14            |
-| Python     | 3.14.5 (unused)  |
 | Git        | 2.39.2           |
 
 ---
