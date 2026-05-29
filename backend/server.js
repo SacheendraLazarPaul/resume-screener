@@ -46,8 +46,8 @@ app.get('/', (_req, res) => {
 });
 
 // ── Start ─────────────────────────────────────────────────────
-app.listen(PORT, async () => {
-  console.log(`\n✅  Backend  →  http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', async () => {
+  console.log(`\n✅  Backend  →  http://0.0.0.0:${PORT}`);
   console.log(`    Node.js  :  ${process.version}`);
   console.log(`    Database :  ${process.env.DATABASE_URL ? '✅ configured' : '❌ NOT SET'}\n`);
 
