@@ -1,78 +1,116 @@
-# Free Deployment Guide
+# Deployment Guide — Netlify (100% Free)
 
-## Stack
-- **Frontend** → Netlify (free)
-- **Backend**  → Render (free)
-- **Database** → Neon (free PostgreSQL cloud)
+## Architecture
+```
+Browser  →  Netlify CDN  (frontend: React/Vite)
+             │
+             └──  /api/*  →  Netlify Function  (backend: serverless Node.js)
+                               │
+                               └──  Neon  (free PostgreSQL, optional)
+                               └──  Gemini / Groq / OpenRouter  (free AI)
+```
 
 ---
 
-## Step 1 — Free Cloud Database (Neon)
+## Step 1 — Free Cloud Database (optional but recommended)
+
+History feature requires a database. Skip this step if you don't need history.
+
 1. Go to https://neon.tech → Sign up free
-2. Create project → copy the connection string
-3. It looks like: `postgresql://user:pass@ep-xxx.neon.tech/neondb?sslmode=require`
-4. Save it — you'll need it in Step 3
+2. Create a project → copy the connection string  
+   It looks like: `postgresql://user:pass@ep-xxx.neon.tech/neondb?sslmode=require`
+3. Run migrations locally once:
+   ```bash
+   DATABASE_URL="your-neon-url" npm run db:migrate
+   ```
 
 ---
 
-## Step 2 — Push code to GitHub
+## Step 2 — Get a Free AI API Key
+
+Pick **one** (you can add more later):
+
+| Provider | Free Tier | Get Key |
+|---|---|---|
+| Google Gemini | 1,500 req/day | https://aistudio.google.com/app/apikey |
+| Groq | 14,400 req/day | https://console.groq.com |
+| OpenRouter | Free models | https://openrouter.ai |
+
+---
+
+## Step 3 — Push to GitHub
+
 ```bash
 git init
 git add .
 git commit -m "initial commit"
-# Create repo on github.com, then:
-git remote add origin https://github.com/YOURUSERNAME/resume-screener.git
+# Create a repo on github.com, then:
+git remote add origin https://github.com/YOUR_USERNAME/resume-screener.git
 git push -u origin main
 ```
 
 ---
 
-## Step 3 — Deploy Backend on Render (free)
-1. Go to https://render.com → Sign up free
-2. New → Web Service → Connect GitHub repo
-3. Settings:
-   - Root Directory: `backend`
-   - Build Command: `npm install`
-   - Start Command: `node server.js`
-4. Add Environment Variables:
-   - `DATABASE_URL` = your Neon connection string
-   - `GROQ_API_KEY` = your Groq key
-   - `GEMINI_API_KEY` = your Gemini key (starts with AIza)
-   - `OPENROUTER_API_KEY` = your OpenRouter key
-   - `NODE_ENV` = production
-   - `FRONTEND_URL` = (fill in after Step 4)
-5. Deploy → copy your backend URL (e.g. https://resume-screener-api.onrender.com)
+## Step 4 — Deploy on Netlify
+
+1. Go to https://app.netlify.com → **Add new site → Import an existing project**
+2. Connect GitHub → select your repo
+3. Netlify auto-reads `netlify.toml` — build settings are pre-configured ✅
+4. Go to **Site configuration → Environment variables** → Add:
+
+   | Variable | Value |
+   |---|---|
+   | `GEMINI_API_KEY` | your key (starts with `AIza`) |
+   | `GROQ_API_KEY` | your key (optional) |
+   | `OPENROUTER_API_KEY` | your key (optional) |
+   | `AI_PROVIDER` | `gemini` (or leave blank to auto-detect) |
+   | `DATABASE_URL` | your Neon URL (optional) |
+
+5. Click **Deploy site** → done! 🎉
 
 ---
 
-## Step 4 — Deploy Frontend on Netlify (free)
-1. Go to https://netlify.com → Sign up free
-2. New site → Import from GitHub
-3. Settings:
-   - Base directory: `frontend`
-   - Build command: `npm run build`
-   - Publish directory: `frontend/dist`
-4. Add Environment Variable:
-   - `VITE_API_URL` = your Render backend URL from Step 3
-5. Deploy → copy your frontend URL
+## Reconnecting your existing Netlify project
+
+If you already have a site at `luxury-llama-eaf171.netlify.app`:
+
+1. In Netlify dashboard → your site → **Site configuration → Build & deploy**
+2. Link it to your GitHub repo (or drag-drop the `frontend/dist` folder)
+3. Set environment variables as above
+4. Trigger a redeploy
 
 ---
 
-## Step 5 — Connect them
-1. Go back to Render → your backend service → Environment
-2. Set `FRONTEND_URL` = your Netlify URL
-3. Redeploy backend
+## Free Tier Limits
 
----
-
-## Done! Your app is live 🎉
-
-### Free tier limits:
-| Service | Limit |
+| Service | Free Limit |
 |---|---|
-| Render backend | Sleeps after 15min, 750hr/month free |
-| Neon database | 0.5GB storage, 10GB transfer |
-| Netlify frontend | 100GB bandwidth, always on |
-| Groq API | 14,400 req/day |
-| Gemini API | 1,500 req/day |
-| OpenRouter | Free models available |
+| Netlify Functions | 125,000 invocations/month |
+| Netlify Bandwidth | 100 GB/month |
+| Neon Database | 0.5 GB storage, 10 GB transfer |
+| Gemini API | 1,500 requests/day |
+| Groq API | 14,400 requests/day |
+
+No credit card required for any of the above.
+
+---
+
+## Local Development
+
+```bash
+# 1. Install dependencies
+npm install --prefix frontend
+npm install --prefix backend
+
+# 2. Copy and fill in .env
+cp .env backend/.env
+# Edit backend/.env with your keys
+
+# 3. Run DB migration (first time only)
+npm run db:migrate
+
+# 4. Start dev servers
+npm run dev
+# Frontend: http://localhost:5173
+# Backend:  http://localhost:3001
+```

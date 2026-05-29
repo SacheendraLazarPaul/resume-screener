@@ -1,0 +1,51 @@
+# ─────────────────────────────────────────────────────────────
+#  netlify.toml  — Full-stack Resume Screener on Netlify (free)
+#  Frontend: Vite/React  →  Netlify CDN
+#  Backend:  Express     →  Netlify Functions (serverless)
+#  Database: Neon        →  free PostgreSQL cloud
+# ─────────────────────────────────────────────────────────────
+
+[build]
+  # Root of the monorepo
+  base = "."
+
+  # Build the frontend
+  command = "npm install --prefix frontend && npm run build --prefix frontend && npm install --prefix netlify/functions"
+
+  # Serve built frontend from here
+  publish = "frontend/dist"
+
+  # Netlify Functions directory
+  functions = "netlify/functions"
+
+[functions]
+  # Bundle each function with its dependencies using esbuild
+  node_bundler = "esbuild"
+
+# ─── Redirect all /api/* calls to the Netlify Function ───────
+[[redirects]]
+  from = "/api/*"
+  to   = "/.netlify/functions/api/:splat"
+  status = 200
+
+# ─── SPA fallback: all other routes → index.html ─────────────
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200
+
+# ─── Environment variable placeholders ───────────────────────
+#  Set these in: Netlify dashboard → Site → Environment variables
+#  (Do NOT commit real keys to git)
+#
+# Required — pick at least ONE AI provider:
+#   GEMINI_API_KEY      → https://aistudio.google.com/app/apikey  (1500 req/day free)
+#   GROQ_API_KEY        → https://console.groq.com                (14400 req/day free)
+#   OPENROUTER_API_KEY  → https://openrouter.ai                   (free models)
+#
+# Optional:
+#   AI_PROVIDER         → gemini | groq | openrouter  (auto-detects if blank)
+#   GEMINI_MODEL        → gemini-2.0-flash  (default)
+#   GROQ_MODEL          → llama-3.3-70b-versatile  (default)
+#   DATABASE_URL        → postgresql://...  from https://neon.tech  (0.5GB free)
+#                         App works without DB — history feature disabled
