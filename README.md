@@ -1,235 +1,156 @@
 # Resume Screener
 
-AI-powered resume screening and candidate ranking.
+AI-powered resume screening and candidate ranking web app.
+
 Upload resumes + a Job Description → get a ranked list with scores, skill tags, and AI assessments.
-All results are saved to your local PostgreSQL database.
+
+**Live App:** [resume-screener-ui-production.up.railway.app](https://resume-screener-ui-production.up.railway.app)  
+**GitHub:** [github.com/SacheendraLazarPaul/resume-screener](https://github.com/SacheendraLazarPaul/resume-screener)
 
 ---
 
-## Your environment (already installed ✅)
+## Features
 
-| Tool       | Version you have |
-|------------|------------------|
-| Node.js    | v24.16.0         |
-| npm        | 11.13.0          |
-| PostgreSQL | 16.14            |
-| Git        | 2.39.2           |
+- Upload multiple resumes (PDF, DOCX, TXT) + a Job Description
+- AI ranks candidates with scores, skill tags, and assessments
+- Screening history saved to PostgreSQL
+- CSV export of results
+- Supports Google Gemini, Groq, and Ollama (local) AI providers
 
 ---
 
-## 1 — Create the database
+## Tech Stack
 
-Open **Command Prompt** and run:
+| Layer    | Technology                        |
+|----------|-----------------------------------|
+| Frontend | React, Vite                       |
+| Backend  | Node.js, Express                  |
+| Database | PostgreSQL                        |
+| AI       | Google Gemini API / Groq API      |
+| Deployed | Railway                           |
 
-```cmd
+---
+
+## Local Setup
+
+### 1 — Clone the repo
+
+```bash
+git clone https://github.com/SacheendraLazarPaul/resume-screener.git
+cd resume-screener
+```
+
+### 2 — Create the database
+
+```bash
 psql -U postgres -c "CREATE DATABASE resume_screener;"
 ```
 
-If it asks for a password, enter your PostgreSQL password (the one you set during install).
-If you forgot it, see the Troubleshooting section below.
+### 3 — Configure environment
 
----
-
-## 2 — Get a free AI key (pick one)
-
-**Option A — Google Gemini (recommended)**
-1. Go to https://aistudio.google.com
-2. Sign in with your Google account
-3. Click **Get API key** → Create API key
-4. Copy the key (starts with `AIza...`)
-> Free: 1,500 requests/day, no credit card needed
-
-**Option B — Groq (fastest)**
-1. Go to https://console.groq.com
-2. Sign up free → API Keys → Create
-3. Copy the key (starts with `gsk_...`)
-> Free: 14,400 requests/day
-
-**Option C — Ollama (100% local, no internet, no key)**
-1. Download from https://ollama.com
-2. Install and run: `ollama pull llama3`
-> Free forever, runs on your machine
-
----
-
-## 3 — Configure environment
-
-```cmd
-cd resume-screener
+```bash
 copy .env.example backend\.env
 ```
 
-Open `backend\.env` in Notepad and fill in:
+Open `backend/.env` and fill in:
 
 ```env
-# Your AI choice (gemini / groq / ollama)
 AI_PROVIDER=gemini
 GEMINI_API_KEY=AIza_YOUR_KEY_HERE
-
-# Your local PostgreSQL
 DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@localhost:5432/resume_screener
 ```
 
-Replace `YOUR_PASSWORD` with your PostgreSQL password.
+Get a free Gemini key at [aistudio.google.com](https://aistudio.google.com) (1,500 req/day, no credit card).  
+Or use Groq at [console.groq.com](https://console.groq.com) (14,400 req/day, free).
 
----
+### 4 — Install dependencies
 
-## 4 — Install dependencies
-
-```cmd
+```bash
 npm run install:all
 ```
 
-This installs root tools, backend packages, and frontend packages separately.
+### 5 — Run database migration
 
----
-
-## 5 — Run database migration
-
-```cmd
+```bash
 npm run db:migrate
 ```
 
-Creates the `screening_sessions` and `candidates` tables.
-Safe to run multiple times (uses `CREATE TABLE IF NOT EXISTS`).
+### 6 — Start the app
 
----
-
-## 6 — Start the app
-
-```cmd
+```bash
 npm run dev
 ```
 
-This starts both servers at once:
-- **Backend** → http://localhost:3001
-- **Frontend** → http://localhost:5173
-
-Open http://localhost:5173 in your browser.
+- Frontend → http://localhost:5173
+- Backend → http://localhost:3001
 
 ---
 
-## Folder structure
+## Folder Structure
 
 ```
 resume-screener/
-├── package.json              ← root scripts (dev, install:all, db:migrate)
-├── .env.example              ← copy to backend/.env
-├── .gitignore
-│
-├── backend/                  ← independent Node.js/Express API
-│   ├── package.json          ← backend dependencies only
-│   ├── server.js             ← Express entry point, port 3001
+├── backend/
+│   ├── server.js               ← Express entry point (port 3001)
 │   ├── db/
-│   │   ├── pool.js           ← PostgreSQL connection pool
-│   │   ├── migrate.js        ← creates tables
-│   │   └── queries.js        ← all SQL queries
+│   │   ├── pool.js             ← PostgreSQL connection
+│   │   ├── migrate.js          ← creates tables
+│   │   └── queries.js          ← SQL queries
 │   ├── routes/
-│   │   ├── screen.js         ← POST /api/screen
-│   │   └── history.js        ← GET/DELETE /api/history
+│   │   ├── screen.js           ← POST /api/screen
+│   │   └── history.js          ← GET/DELETE /api/history
 │   └── services/
-│       ├── aiService.js      ← Gemini / Groq / OpenRouter / Ollama
-│       ├── parseService.js   ← PDF, DOCX, TXT extraction
-│       └── scoringService.js ← prompt + score validation
+│       ├── aiService.js        ← Gemini / Groq / Ollama
+│       ├── parseService.js     ← PDF, DOCX, TXT parsing
+│       └── scoringService.js   ← scoring + validation
 │
-└── frontend/                 ← independent React/Vite app
-    ├── package.json          ← frontend dependencies only
-    ├── vite.config.js        ← proxies /api → localhost:3001
-    ├── index.html
+└── frontend/
     └── src/
-        ├── App.jsx           ← root component + navigation
-        ├── utils/
-        │   ├── api.js        ← all backend API calls
-        │   └── export.js     ← CSV export
-        ├── components/
-        │   ├── DropZone.jsx
-        │   ├── CandidateCard.jsx
-        │   ├── ScoreBar.jsx
-        │   └── StatusBar.jsx
-        └── pages/
-            ├── UploadPage.jsx
-            ├── JDPage.jsx
-            ├── ResultsPage.jsx
-            └── HistoryPage.jsx
+        ├── pages/
+        │   ├── UploadPage.jsx
+        │   ├── JDPage.jsx
+        │   ├── ResultsPage.jsx
+        │   └── HistoryPage.jsx
+        └── components/
+            ├── DropZone.jsx
+            ├── CandidateCard.jsx
+            ├── ScoreBar.jsx
+            └── StatusBar.jsx
 ```
 
 ---
 
-## Upgrading parts independently
+## Switching AI Provider
 
-**Upgrade only the backend** (e.g. add a new AI provider):
-```cmd
-cd backend
-npm install some-new-package
-cd ..
-```
-
-**Upgrade only the frontend** (e.g. add a new UI library):
-```cmd
-cd frontend
-npm install some-new-package
-cd ..
-```
-
-The frontend and backend have completely separate `package.json` files and `node_modules`.
-
----
-
-## Switching AI provider
-
-Edit `backend/.env` — just change two lines, no code changes needed:
+Edit `backend/.env` — no code changes needed:
 
 ```env
-# Switch to Groq:
+# Groq
 AI_PROVIDER=groq
 GROQ_API_KEY=gsk_...
-GROQ_MODEL=llama-3.3-70b-versatile
 
-# Switch to Ollama (local):
+# Ollama (local, no internet required)
 AI_PROVIDER=ollama
 OLLAMA_MODEL=llama3
 
-# Switch back to Gemini:
+# Gemini
 AI_PROVIDER=gemini
 GEMINI_API_KEY=AIza...
 ```
 
-Then restart the backend (`Ctrl+C` and `npm run dev` again).
-
----
-
-## Free deployment (when ready)
-
-| What          | Where          | Cost |
-|---------------|----------------|------|
-| Frontend      | Vercel         | Free |
-| Backend       | Render         | Free |
-| Database      | Neon.tech      | Free |
-| AI            | Gemini/Groq    | Free |
-
-See DEPLOY.md for step-by-step instructions.
+Restart the backend after changing.
 
 ---
 
 ## Troubleshooting
 
-**"password authentication failed for user postgres"**
-You need your PostgreSQL password. Try:
-```cmd
-psql -U postgres
-```
-If you can't remember it, open pgAdmin (installed with PostgreSQL) to reset it.
+**"password authentication failed"** — Open pgAdmin to reset your PostgreSQL password.
 
-**"ECONNREFUSED" on startup**
-PostgreSQL service isn't running. Open **Services** in Windows → find "postgresql-x64-16" → Start.
-
-Or via Command Prompt:
-```cmd
+**"ECONNREFUSED" on startup** — PostgreSQL isn't running. Start it:
+```bash
 net start postgresql-x64-16
 ```
 
-**"Cannot find module" errors**
-Run `npm run install:all` again from the root folder.
+**"Cannot find module"** — Run `npm run install:all` again from the root folder.
 
-**AI returns error**
-Check your API key in `backend/.env`. Make sure there are no spaces around the `=` sign.
+**AI returns error** — Check your API key in `backend/.env`. No spaces around the `=` sign.
